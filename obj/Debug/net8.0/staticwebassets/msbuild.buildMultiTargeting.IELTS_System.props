@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/IELTS_System.props" />
+</Project>
