@@ -61,20 +61,46 @@ public class UserResponseRepository : IUserResponseRepository
     public async Task<UserResponse> CreateAsync(UserResponse userResponse)
     {
         if(userResponse == null) throw new ArgumentNullException(nameof(userResponse));
+        
         // Check if this question has already been answered for this user test
         bool alreadyAnswered = await _context.UserResponses
             .AnyAsync(ur => ur.UserTestId == userResponse.UserTestId && 
                             ur.QuestionId == userResponse.QuestionId);
-    
+
         if (alreadyAnswered)
         {
             throw new InvalidOperationException($"Question {userResponse.QuestionId} has already been answered in user test {userResponse.UserTestId}");
+        }
+
+        // Get the question with its answer to check if the user's answer is correct
+        var question = await _context.Questions
+            .Include(q => q.Answer)
+            .FirstOrDefaultAsync(q => q.QuestionId == userResponse.QuestionId);
+        
+        if (question != null && question.Answer != null)
+        {
+            // Compare the user's answer with the correct answer
+            // You may need to adjust the comparison logic based on your specific requirements
+            bool isCorrect = string.Equals(
+                userResponse.UserAnswer?.Trim(), 
+                question.Answer.CorrectAnswer?.Trim(), 
+                StringComparison.InvariantCultureIgnoreCase
+            );
+        
+        // Set MarksAwarded to 1 if correct, 0 if incorrect
+            userResponse.MarksAwarded = isCorrect ? 1 : 0;
+        }
+        else
+        {
+            // If the question has no answer defined, default to 0 marks
+            userResponse.MarksAwarded = 0;
         }
 
         _context.Entry(userResponse.UserTest).State = EntityState.Unchanged;
         _context.Entry(userResponse.Question).State = EntityState.Unchanged;
         await _context.UserResponses.AddAsync(userResponse);
         await _context.SaveChangesAsync();
+        
         return userResponse;   
     }
     
