@@ -10,7 +10,7 @@ public class CreateUserTestDto
     public DateTime StartTime { get; set; } 
     public DateTime EndTime { get; set; }
     [StringLength(20)]
-    public string Status { get; set; } = "In Progress";
+    public string Status { get; set; } = "in progress";
     public int NumCorrectAnswer { get; set; }
     [MaxLength(10000)]
     public string Feedback { get; set; } = string.Empty;
